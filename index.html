@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoNexus | Neural Algorithm Visualizer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap');
+        
+        :root {
+            /* Dynamic Theme Variables - Default Cyberpunk */
+            --bg-primary: #030712;
+            --bg-secondary: rgba(15, 23, 42, 0.6);
+            --accent-1: #00f0ff;
+            --accent-2: #ff00aa;
+            --accent-3: #b829dd;
+            --success: #00ff9d;
+            --warning: #ffea00;
+            --danger: #ff0055;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --shadow-glow: 0 0 30px rgba(0, 240, 255, 0.3);
+            
+            /* Layout */
+            --sidebar-width: 360px;
+            --header-height: 70px;
+            --border-radius: 16px;
+        }
+
+        /* Theme Classes */
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(255, 255, 255, 0.8);
+            --accent-1: #0066ff;
+            --accent-2: #ff0066;
+            --accent-3: #7c3aed;
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --shadow-glow: 0 0 30px rgba(0, 102, 255, 0.2);
+        }
+
+        [data-theme="ocean"] {
+            --bg-primary: #0c4a6e;
+            --bg-secondary: rgba(12, 74, 110, 0.6);
+            --accent-1: #22d3ee;
+            --accent-2: #f472b6;
+            --accent-3: #a78bfa;
+            --text-primary: #ecfeff;
+            --shadow-glow: 0 0 30px rgba(34, 211, 238, 0.3);
+        }
+
+        [data-theme="sunset"] {
+            --bg-primary: #2a1810;
+            --bg-secondary: rgba(154, 52, 18, 0.2);
+            --accent-1: #fb923c;
+            --accent-2: #f43f5e;
+            --accent-3: #e879f9;
+            --text-primary: #fff7ed;
+            --shadow-glow: 0 0 30px rgba(251, 146, 60, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent-1);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent-2);
+            bottom: -100px;
+            right: -100px;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* Grid Pattern */
+        .grid-pattern {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--glass-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Main Layout */
+        .app {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Header - Ultra Premium */
+        .header {
+            height: var(--header-height);
+            background: linear-gradient(180deg, var(--bg-secondary), transparent);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: relative;
+            backdrop-filter: blur(20px);
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-container {
+            position: relative;
+            width: 45px;
+            height: 45px;
+        }
+
+        .logo-ring {
+            position: absolute;
+            inset: 0;
+            border: 2px solid var(--accent-1);
+            border-radius: 50%;
+            animation: spin 10s linear infinite;
+            box-shadow: 0 0 20px var(--accent-1);
+        }
+
+        .logo-ring:nth-child(2) {
+            inset: 6px;
+            border-color: var(--accent-2);
+            animation: spin 15s linear infinite reverse;
+        }
+
+        .logo-core {
+            position: absolute;
+            inset: 12px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 0 30px var(--accent-1);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .brand-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, var(--text-primary), var(--accent-1));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 8px;
+            padding: 6px;
+            background: var(--glass-bg);
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .theme-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .theme-btn.active {
+            border-color: var(--text-primary);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .theme-btn.cyber { background: linear-gradient(135deg, #00f0ff, #ff00aa); }
+        .theme-btn.light { background: linear-gradient(135deg, #f8fafc, #0066ff); }
+        .theme-btn.ocean { background: linear-gradient(135deg, #0c4a6e, #22d3ee); }
+        .theme-btn.sunset { background: linear-gradient(135deg, #fb923c, #f43f5e); }
+
+        /* Button Styles */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border: none;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), var(--shadow-glow);
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        /* Select Dropdown */
+        .custom-select {
+            position: relative;
+            min-width: 220px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            appearance: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .custom-select::after {
+            content: '▼';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            color: var(--accent-1);
+            pointer-events: none;
+        }
+
+        /* Main Workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            gap: 20px;
+            padding: 20px;
+            padding-top: 0;
+        }
+
+        /* Glass Panels */
+        .panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-left {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+        }
+
+        .panel-center {
+            flex: 1;
+            position: relative;
+            min-width: 0;
+        }
+
+        .panel-right {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .panel-title-group h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .panel-title-group p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .stat-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--accent-1);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Input Groups */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px rgba(0, 240, 255, 0.1);
+        }
+
+        .info-card {
+            padding: 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0,240,255,0.05), rgba(184,41,221,0.05));
+            border-left: 4px solid var(--accent-1);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* Visualization Area */
+        .viz-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: auto;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.2), transparent);
+        }
+
+        .viz-toolbar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        #viz-canvas {
+            min-width: 100%;
+            min-height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px;
+        }
+
+        /* Tree Nodes - 3D Effect */
+        .node-container {
+            perspective: 1000px;
+        }
+
+        .tree-node {
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .node-shape {
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+            transition: all 0.4s;
+        }
+
+        .node-active .node-shape {
+            filter: drop-shadow(0 0 30px var(--accent-1));
+            animation: nodePulse 2s infinite;
+        }
+
+        @keyframes nodePulse {
+            0%, 100% { filter: drop-shadow(0 0 20px var(--accent-1)); }
+            50% { filter: drop-shadow(0 0 40px var(--accent-1)); }
+        }
+
+        .link {
+            stroke: var(--glass-border);
+            stroke-width: 2;
+            fill: none;
+            transition: all 0.4s;
+        }
+
+        .link-active {
+            stroke: var(--accent-1);
+            stroke-width: 3;
+            filter: drop-shadow(0 0 10px var(--accent-1));
+            stroke-dasharray: 5;
+            animation: dash 1s linear infinite;
+        }
+
+        /* Array Visualization Overlay */
+        .array-viz {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .array-bar {
+            width: 40px;
+            height: 60px;
+            background: linear-gradient(to top, var(--accent-1), var(--accent-2));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .array-bar.pivot {
+            background: linear-gradient(to top, var(--warning), var(--danger));
+            box-shadow: 0 0 20px var(--warning);
+        }
+
+        .array-bar.active {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,240,255,0.4);
+        }
+
+        /* Timeline Slider */
+        .timeline-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .timeline-track {
+            height: 6px;
+            background: var(--glass-bg);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-1), var(--accent-2));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px var(--accent-1);
+        }
+
+        .timeline-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid var(--accent-1);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--accent-1);
+            cursor: grab;
+        }
+
+        .controls-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-1);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .control-btn.play {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Explanation Cards */
+        .step-trace {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .trace-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .trace-card.active {
+            border-color: var(--accent-1);
+            background: linear-gradient(135deg, rgba(0,240,255,0.1), rgba(184,41,221,0.05));
+            box-shadow: var(--shadow-glow);
+            transform: translateX(5px);
+        }
+
+        .trace-card.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-1);
+            box-shadow: 0 0 10px var(--accent-1);
+        }
+
+        .trace-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .trace-type {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--accent-1);
+            padding: 4px 10px;
+            background: rgba(0,240,255,0.1);
+            border-radius: 6px;
+        }
+
+        .trace-step {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .trace-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .trace-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .meta-box {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent-2);
+        }
+
+        /* Code Inspector */
+        .code-panel {
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border);
+        }
+
+        .code-header {
+            padding: 12px 16px;
+            background: var(--glass-bg);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-content {
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .code-line {
+            padding: 2px 8px;
+            border-radius: 4px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .code-line.active {
+            opacity: 1;
+            background: rgba(0,240,255,0.1);
+            border-left: 3px solid var(--accent-1);
+        }
+
+        .keyword { color: var(--accent-2); }
+        .function { color: var(--accent-1); }
+        .string { color: var(--success); }
+        .comment { color: var(--text-secondary); font-style: italic; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-1);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-1);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-1);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .panel-left, .panel-right {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .workspace {
+                flex-direction: column;
+            }
+            .panel-left, .panel-right {
+                width: 100%;
+                height: 300px;
+            }
+            .panel-center {
+                flex: 1;
+                order: -1;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .animate-in {
+            animation: slideIn 0.3s ease;
+        }
+    </style>
+</head>
+<body data-theme="cyber">
+
+<div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+<div class="grid-pattern"></div>
+
+<div class="app">
+    <header class="header">
+        <div class="brand-section">
+            <div class="logo-container">
+                <div class="logo-ring"></div>
+                <div class="logo-ring"></div>
+                <div class="logo-core">⚡</div>
+            </div>
+            <div class="brand-text">
+                <h1>AlgoNexus</h1>
+                <p>Neural Algorithm Engine</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="theme-switcher">
+                <div class="theme-btn cyber active" onclick="setTheme('cyber')" title="Cyberpunk"></div>
+                <div class="theme-btn light" onclick="setTheme('light')" title="Light"></div>
+                <div class="theme-btn ocean" onclick="setTheme('ocean')" title="Ocean"></div>
+                <div class="theme-btn sunset" onclick="setTheme('sunset')" title="Sunset"></div>
+            </div>
+
+            <button class="btn btn-icon" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+            <button class="btn btn-icon" onclick="exportImage()" title="Export PNG">📷</button>
+            
+            <div class="custom-select">
+                <select id="algoSelect" onchange="updateUI()">
+                    <option value="mergesort">Merge Sort</option>
+                    <option value="quicksort">Quick Sort</option>
+                    <option value="binarysearch">Binary Search</option>
+                    <option value="closestpair">Closest Pair</option>
+                    <option value="strassen">Strassen's Matrix</option>
+                    <option value="hanoi">Tower of Hanoi</option>
+                    <option value="fibonacci">Fibonacci (Memo)</option>
+                    <option value="nqueens">N-Queens</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="runAlgorithm()">
+                <span>▶</span> Execute
+            </button>
+            <button class="btn" onclick="resetAll()">Reset</button>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <!-- Left Panel: Configuration -->
+        <aside class="panel panel-left">
+            <div class="panel-header">
+                <div class="panel-title-group">
+                    <h2 id="configTitle">Merge Sort</h2>
+                    <p>Divide and Conquer Algorithm</p>
+                    <div class="badge-group">
+                        <span class="stat-badge" id="timeComplexity">O(n log n)</span>
+                        <span class="stat-badge" id="spaceComplexity">O(n)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-content">
+                <div class="info-card" id="algoDescription">
+                    Recursively divides array into halves, sorts them, and merges back together.
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statComparisons">0</div>
+                        <div class="stat-label">Comparisons</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statSwaps">0</div>
+                        <div class="stat-label">Operations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statDepth">0</div>
+                        <div class="stat-label">Max Depth</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTime">0ms</div>
+                        <div class="stat-label">Time</div>
+                    </div>
+                </div>
+
+                <div id="inputContainer">
+                    <!-- Dynamic inputs -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Panel: Visualization -->
+        <main class="panel panel-center">
+            <div class="viz-toolbar">
+                <button class="btn btn-icon" onclick="zoomIn()">+</button>
+                <button class="btn btn-icon" onclick="zoomOut()">-</button>
+                <button class="btn btn-icon" onclick="toggleFullscreen()">⛶</button>
+            </div>
+
+            <div class="viz-container" id="vizContainer">
+                <div id="viz-canvas">
+                    <svg id="mainSvg" width="1000" height="600"></svg>
+                </div>
+                
+                <!-- Array Visualization Overlay -->
+                <div class="array-viz" id="arrayViz" style="display: none;">
+                    <!-- Bars injected here -->
+                </div>
+            </div>
+
+            <!-- Timeline Controls -->
+            <div class="timeline-container">
+                <div class="timeline-track" onclick="seekTimeline(event)">
+                    <div class="timeline-progress" id="timelineProgress" style="width: 0%"></div>
+                    <div class="timeline-thumb" id="timelineThumb" style="left: 0%"></div>
+                </div>
+                <div class="controls-bar">
+                    <button class="control-btn" onclick="stepFirst()">⏮</button>
+                    <button class="control-btn" onclick="stepPrev()">◀</button>
+                    <button class="control-btn play" id="playBtn" onclick="togglePlay()">▶</button>
+                    <button class="control-btn" onclick="stepNext()">▶</button>
+                    <button class="control-btn" onclick="stepLast()">⏭</button>
+                    <div style="width: 1px; height: 30px; background: var(--glass-border); margin: 0 10px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                        Step <span id="currentStep">0</span> / <span id="totalSteps">0</span>
+                    </span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel: Trace & Code -->
+        <aside class="panel panel-right">
+            <div class="panel-header">
+                <div class="panel-title-group">
+                    <h2>Execution Trace</h2>
+                    <p>Step-by-step analysis</p>
+                </div>
+            </div>
+            
+            <div class="panel-content">
+                <div class="step-trace" id="traceContainer">
+                    <div class="trace-card active">
+                        <div class="trace-header">
+                            <span class="trace-type">Ready</span>
+                            <span class="trace-step">Step 0</span>
+                        </div>
+                        <div class="trace-content">
+                            Initialize the algorithm visualization engine. Configure parameters and click Execute to begin.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-panel">
+                    <div class="code-header">
+                        <span>Source Code</span>
+                        <span style="font-size: 0.75rem; color: var(--accent-1);">Live</span>
+                    </div>
+                    <div class="code-content" id="codeDisplay">
+                        <div class="code-line active"><span class="comment">// Select an algorithm to view code</span></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+// Theme Management
+function setTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.theme-btn.${theme}`).classList.add('active');
+}
+
+// Algorithm Data & Engines
+const algorithms = {
+    mergesort: {
+        name: 'Merge Sort',
+        category: 'Sorting',
+        time: 'O(n log n)',
+        space: 'O(n)',
+        desc: 'Stable, comparison-based sorting. Divides array into halves, recursively sorts, and merges.',
+        inputs: `<div class="form-group"><label class="form-label">Array <span>comma separated</span></label><div class="input-wrapper"><input type="text" class="form-input" id="inputArray" value="64,34,25,12,22,11,90,88,76,50"></div></div>`,
+        code: `function mergeSort(arr, l, r) {
+  if (l < r) {
+    const m = Math.floor((l + r) / 2);
+    mergeSort(arr, l, m);      // Left half
+    mergeSort(arr, m + 1, r);  // Right half
+    merge(arr, l, m, r);       // Merge
+  }
+}`
+    },
+    quicksort: {
+        name: 'Quick Sort',
+        category: 'Sorting',
+        time: 'O(n log n)',
+        space: 'O(log n)',
+        desc: 'In-place sorting using pivot. Partitions array around selected pivot element.',
+        inputs: `<div class="form-group"><label class="form-label">Array</label><input type="text" class="form-input" id="inputArray" value="25,10,40,22,35,50,18,5,45,30"></div>`,
+        code: `function quickSort(arr, low, high) {
+  if (low < high) {
+    const pi = partition(arr, low, high);
+    quickSort(arr, low, pi - 1);
+    quickSort(arr, pi + 1, high);
+  }
+}`
+    },
+    binarysearch: {
+        name: 'Binary Search',
+        category: 'Searching',
+        time: 'O(log n)',
+        space: 'O(1)',
+        desc: 'Efficient searching in sorted arrays. Repeatedly divides search interval in half.',
+        inputs: `<div class="form-group"><label class="form-label">Sorted Array</label><input type="text" class="form-input" id="inputArray" value="11,22,25,34,50,64,76,88,90,95"></div><div class="form-group"><label class="form-label">Target</label><input type="number" class="form-input" id="targetValue" value="64"></div>`,
+        code: `function binarySearch(arr, l, r, x) {
+  if (r >= l) {
+    const mid = l + Math.floor((r - l) / 2);
+    if (arr[mid] == x) return mid;
+    if (arr[mid] > x) return binarySearch(arr, l, mid-1, x);
+    return binarySearch(arr, mid+1, r, x);
+  }
+  return -1;
+}`
+    },
+    strassen: {
+        name: "Strassen's Matrix",
+        category: 'Matrix',
+        time: 'O(n^2.81)',
+        space: 'O(n^2)',
+        desc: 'Matrix multiplication using 7 recursive multiplications instead of 8.',
+        inputs: `<div class="form-group"><label class="form-label">Matrix Size</label><select class="form-input" id="matrixSize" style="font-family: Inter;"><option value="2">2 × 2</option><option value="4">4 × 4</option></select></div><div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px;">Matrices auto-generated with random values</div>`,
+        code: `function strassen(A, B) {
+  if (n == 1) return A[0][0] * B[0][0];
+  
+  // Divide matrices into quadrants
+  const [A11, A12, A21, A22] = split(A);
+  const [B11, B12, B21, B22] = split(B);
+  
+  // 7 products (M1-M7)
+  const M1 = strassen(add(A11,A22), add(B11,B22));
+  const M2 = strassen(add(A21,A22), B11);
+  // ... M3-M7
+  
+  return combine(M1, M2, ...);
+}`
+    },
+    hanoi: {
+        name: 'Tower of Hanoi',
+        category: 'Recursion',
+        time: 'O(2^n)',
+        space: 'O(n)',
+        desc: 'Classic recursion problem. Move n disks from source to destination using auxiliary rod.',
+        inputs: `<div class="form-group"><label class="form-label">Number of Disks</label><input type="number" class="form-input" id="diskCount" value="4" min="1" max="8"></div>`,
+        code: `function towerOfHanoi(n, src, aux, dest) {
+  if (n == 0) return;
+  
+  towerOfHanoi(n-1, src, dest, aux);
+  moveDisk(src, dest);
+  towerOfHanoi(n-1, aux, src, dest);
+}`
+    },
+    fibonacci: {
+        name: 'Fibonacci (Memo)',
+        category: 'DP',
+        time: 'O(n)',
+        space: 'O(n)',
+        desc: 'Optimized recursive Fibonacci with memoization to avoid redundant calculations.',
+        inputs: `<div class="form-group"><label class="form-label">N-th Term</label><input type="number" class="form-input" id="fibN" value="8" min="1" max="20"></div>`,
+        code: `function fib(n, memo = {}) {
+  if (n in memo) return memo[n];
+  if (n <= 2) return 1;
+  
+  memo[n] = fib(n-1, memo) + fib(n-2, memo);
+  return memo[n];
+}`
+    }
+};
+
+// State Management
+let currentNodes = [];
+let currentStep = -1;
+let isPlaying = false;
+let playInterval = null;
+let audioEnabled = false;
+let startTime = null;
+
+// Audio Context for Sonification
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+function playTone(freq, type = 'sine', duration = 0.1) {
+    if (!audioEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    osc.type = type;
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function toggleSound() {
+    audioEnabled = !audioEnabled;
+    event.target.textContent = audioEnabled ? '🔊' : '🔇';
+    if (audioEnabled) playTone(440);
+}
+
+// UI Updates
+function updateUI() {
+    const algo = document.getElementById('algoSelect').value;
+    const data = algorithms[algo];
+    
+    document.getElementById('configTitle').textContent = data.name;
+    document.getElementById('timeComplexity').textContent = data.time;
+    document.getElementById('spaceComplexity').textContent = data.space;
+    document.getElementById('algoDescription').textContent = data.desc;
+    document.getElementById('inputContainer').innerHTML = data.inputs;
+    
+    // Update code display
+    const codeLines = data.code.split('\n').map((line, i) => 
+        `<div class="code-line" id="code-${i}">${escapeHtml(line)}</div>`
+    ).join('');
+    document.getElementById('codeDisplay').innerHTML = codeLines;
+    
+    resetStats();
+}
+
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/function|const|let|var|if|else|return/g, match => `<span class="keyword">${match}</span>`)
+        .replace(/[a-zA-Z_][a-zA-Z0-9_]*(?=\()/g, match => `<span class="function">${match}</span>`)
+        .replace(/\/\/.*/g, match => `<span class="comment">${match}</span>`);
+}
+
+function resetStats() {
+    document.getElementById('statComparisons').textContent = '0';
+    document.getElementById('statSwaps').textContent = '0';
+    document.getElementById('statDepth').textContent = '0';
+    document.getElementById('statTime').textContent = '0ms';
+}
+
+// Algorithm Execution
+function runAlgorithm() {
+    const algo = document.getElementById('algoSelect').value;
+    let engine;
+    
+    startTime = Date.now();
+    
+    try {
+        switch(algo) {
+            case 'mergesort': {
+                const arr = document.getElementById('inputArray').value.split(',').map(Number);
+                engine = new MergeSortEngine(arr);
+                showArrayViz(arr);
+                break;
+            }
+            case 'quicksort': {
+                const arr = document.getElementById('inputArray').value.split(',').map(Number);
+                engine = new QuickSortEngine(arr);
+                showArrayViz(arr);
+                break;
+            }
+            case 'binarysearch': {
+                const arr = document.getElementById('inputArray').value.split(',').map(Number).sort((a,b)=>a-b);
+                const target = parseInt(document.getElementById('targetValue').value);
+                engine = new BinarySearchEngine(arr, target);
+                showArrayViz(arr, target);
+                break;
+            }
+            case 'strassen': {
+                const size = parseInt(document.getElementById('matrixSize').value);
+                const A = generateMatrix(size);
+                const B = generateMatrix(size);
+                engine = new StrassenEngine(A, B);
+                document.getElementById('arrayViz').style.display = 'none';
+                break;
+            }
+            case 'hanoi': {
+                const disks = parseInt(document.getElementById('diskCount').value);
+                engine = new HanoiEngine(disks);
+                document.getElementById('arrayViz').style.display = 'none';
+                break;
+            }
+            case 'fibonacci': {
+                const n = parseInt(document.getElementById('fibN').value);
+                engine = new FibonacciEngine(n);
+                document.getElementById('arrayViz').style.display = 'none';
+                break;
+            }
+        }
+        
+        currentNodes = engine.nodes;
+        document.getElementById('totalSteps').textContent = currentNodes.length;
+        document.getElementById('statDepth').textContent = Math.max(...currentNodes.map(n => n.depth));
+        
+        renderTree();
+        stepFirst();
+        playTone(880, 'sine', 0.2); // Success sound
+        
+    } catch(e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+function showArrayViz(arr, highlight = null) {
+    const container = document.getElementById('arrayViz');
+    container.style.display = 'flex';
+    container.innerHTML = arr.map((val, i) => 
+        `<div class="array-bar ${val === highlight ? 'pivot' : ''}" id="bar-${i}" style="height: ${val + 20}px">${val}</div>`
+    ).join('');
+}
+
+function generateMatrix(n) {
+    return Array.from({length: n}, () => 
+        Array.from({length: n}, () => Math.floor(Math.random() * 9) + 1)
+    );
+}
+
+// Algorithm Engines
+class BaseEngine {
+    constructor() {
+        this.nodes = [];
+        this.id = 0;
+        this.stats = { comparisons: 0, swaps: 0 };
+    }
+    
+    createNode(data, parent = null, type = 'default', explanation = '') {
+        const parentNode = parent !== null ? this.nodes.find(n => n.id === parent) : null;
+        const node = {
+            id: this.id++,
+            parentId: parent,
+            data, type, explanation,
+            depth: parentNode ? parentNode.depth + 1 : 0,
+            timestamp: Date.now() - startTime
+        };
+        this.nodes.push(node);
+        return node.id;
+    }
+}
+
+class MergeSortEngine extends BaseEngine {
+    constructor(arr) {
+        super();
+        this.sort([...arr], 0, arr.length - 1, null);
+    }
+    
+    sort(arr, l, r, parent) {
+        const id = this.createNode(
+            { arr: [...arr], range: [l, r], mid: Math.floor((l+r)/2) },
+            parent, 'divide',
+            `Dividing [${l}..${r}]: [${arr.slice(l, r+1).join(',')}]`
+        );
+        
+        if (l < r) {
+            const m = Math.floor((l + r) / 2);
+            this.sort(arr, l, m, id);
+            this.sort(arr, m + 1, r, id);
+            this.createNode(
+                { action: 'merge', range: [l, r] },
+                id, 'merge',
+                `Merging sorted halves back into [${l}..${r}]`
+            );
+            this.stats.swaps++;
+        }
+    }
+}
+
+class QuickSortEngine extends BaseEngine {
+    constructor(arr) {
+        super();
+        this.sort([...arr], 0, arr.length - 1, null);
+    }
+    
+    sort(arr, low, high, parent) {
+        if (low < high) {
+            const pivot = arr[high];
+            const id = this.createNode(
+                { arr: [...arr], range: [low, high], pivot, low, high },
+                parent, 'partition',
+                `Partition around pivot ${pivot}`
+            );
+            
+            const pi = this.partition(arr, low, high);
+            this.stats.comparisons += (high - low);
+            
+            this.nodes[id].data.partitionIndex = pi;
+            this.sort(arr, low, pi - 1, id);
+            this.sort(arr, pi + 1, high, id);
+        }
+    }
+    
+    partition(arr, low, high) {
+        const pivot = arr[high];
+        let i = low - 1;
+        for (let j = low; j < high; j++) {
+            if (arr[j] < pivot) {
+                i++;
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+                this.stats.swaps++;
+            }
+        }
+        [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+        return i + 1;
+    }
+}
+
+class BinarySearchEngine extends BaseEngine {
+    constructor(arr, target) {
+        super();
+        this.target = target;
+        this.search(arr, 0, arr.length - 1, null);
+    }
+    
+    search(arr, l, r, parent) {
+        if (l > r) {
+            this.createNode({ found: false }, parent, 'notfound', `Target ${this.target} not found`);
+            return;
+        }
+        
+        const mid = Math.floor((l + r) / 2);
+        this.stats.comparisons++;
+        
+        const node = this.createNode(
+            { arr, range: [l, r], mid, target: this.target, value: arr[mid] },
+            parent, arr[mid] === this.target ? 'found' : 'search',
+            arr[mid] === this.target ? `Found ${this.target} at index ${mid}!` : 
+                `Compare arr[${mid}]=${arr[mid]} with ${this.target}`
+        );
+        
+        if (arr[mid] < this.target) this.search(arr, mid + 1, r, node.id);
+        else if (arr[mid] > this.target) this.search(arr, l, mid - 1, node.id);
+    }
+}
+
+class StrassenEngine extends BaseEngine {
+    constructor(A, B) {
+        super();
+        this.multiply(A, B, null, 'Root');
+    }
+    
+    multiply(A, B, parent, label) {
+        const n = A.length;
+        const id = this.createNode(
+            { n, label, matrix: true },
+            parent, n === 1 ? 'base' : 'divide',
+            n === 1 ? `${A[0][0]} × ${B[0][0]} = ${A[0][0] * B[0][0]}` : 
+                `${label}: Divide ${n}×${n} matrices`
+        );
+        
+        if (n === 1) return;
+        
+        const mid = n / 2;
+        // Simplified: just show recursive structure
+        this.multiply([[1]], [[1]], id, 'M1');
+        this.multiply([[1]], [[1]], id, 'M2');
+        this.multiply([[1]], [[1]], id, 'M3');
+        // ... etc
+        
+        this.createNode({}, id, 'combine', 'Combine 7 products');
+    }
+}
+
+class HanoiEngine extends BaseEngine {
+    constructor(n) {
+        super();
+        this.solve(n, 'A', 'B', 'C', null);
+    }
+    
+    solve(n, src, aux, dest, parent) {
+        if (n === 0) return;
+        
+        const id = this.createNode(
+            { n, src, aux, dest },
+            parent, 'recurse',
+            `Move ${n} disks from ${src} to ${dest}`
+        );
+        
+        this.solve(n - 1, src, dest, aux, id);
+        this.createNode(
+            { move: `${src} → ${dest}`, disk: n },
+            id, 'action',
+            `Move disk ${n} from ${src} to ${dest}`
+        );
+        this.solve(n - 1, aux, src, dest, id);
+    }
+}
+
+class FibonacciEngine extends BaseEngine {
+    constructor(n) {
+        super();
+        this.memo = {};
+        this.calc(n, null);
+    }
+    
+    calc(n, parent) {
+        if (n in this.memo) {
+            this.createNode(
+                { n, value: this.memo[n], memo: true },
+                parent, 'memo',
+                `F(${n}) = ${this.memo[n]} (from cache)`
+            );
+            return this.memo[n];
+        }
+        
+        const id = this.createNode(
+            { n },
+            parent, n <= 2 ? 'base' : 'recurse',
+            n <= 2 ? `F(${n}) = 1 (base case)` : `Calculate F(${n}) = F(${n-1}) + F(${n-2})`
+        );
+        
+        if (n <= 2) {
+            this.memo[n] = 1;
+            return 1;
+        }
+        
+        const left = this.calc(n - 1, id);
+        const right = this.calc(n - 2, id);
+        this.memo[n] = left + right;
+        
+        this.createNode(
+            { n, value: this.memo[n], left, right },
+            id, 'combine',
+            `F(${n}) = ${left} + ${right} = ${this.memo[n]}`
+        );
+        
+        return this.memo[n];
+    }
+}
+
+// Visualization Rendering
+function renderTree() {
+    const svg = document.getElementById('mainSvg');
+    svg.innerHTML = '';
+    
+    if (!currentNodes.length) return;
+    
+    const maxDepth = Math.max(...currentNodes.map(n => n.depth));
+    const width = Math.max(1000, Math.pow(2, maxDepth + 1) * 80);
+    const height = (maxDepth + 1) * 120 + 100;
+    
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    
+    // Layout calculation
+    const levels = {};
+    currentNodes.forEach(n => {
+        if (!levels[n.depth]) levels[n.depth] = [];
+        levels[n.depth].push(n);
+    });
+    
+    Object.keys(levels).forEach(d => {
+        const nodes = levels[d];
+        const gap = width / (nodes.length + 1);
+        nodes.forEach((n, i) => {
+            n.x = gap * (i + 1);
+            n.y = 60 + parseInt(d) * 120;
+        });
+    });
+    
+    // Draw links
+    currentNodes.forEach(n => {
+        if (n.parentId !== null) {
+            const p = currentNodes.find(x => x.id === n.parentId);
+            if (p) {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M${p.x},${p.y + 35} C${p.x},${p.y + 70} ${n.x},${n.y - 70} ${n.x},${n.y - 35}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'link');
+                path.setAttribute('id', `link-${n.id}`);
+                svg.appendChild(path);
+            }
+        }
+    });
+    
+    // Draw nodes
+    currentNodes.forEach((n, i) => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', `translate(${n.x}, ${n.y})`);
+        g.setAttribute('class', 'tree-node');
+        g.setAttribute('id', `node-${i}`);
+        
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('r', 35);
+        circle.setAttribute('class', 'node-shape');
+        circle.setAttribute('fill', 'rgba(15, 23, 42, 0.9)');
+        circle.setAttribute('stroke', 'var(--accent-1)');
+        circle.setAttribute('stroke-width', '2');
+        
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dy', '0.35em');
+        text.setAttribute('fill', '#fff');
+        text.setAttribute('font-size', '13');
+        text.setAttribute('font-weight', '600');
+        
+        if (n.data.matrix) {
+            text.textContent = n.data.label.split('=')[0];
+        } else if (n.data.range) {
+            text.textContent = `${n.data.range[0]}..${n.data.range[1]}`;
+        } else if (n.data.n && !n.data.arr) {
+            text.textContent = `n=${n.data.n}`;
+        } else {
+            text.textContent = n.type.substring(0, 4);
+        }
+        
+        g.appendChild(circle);
+        g.appendChild(text);
+        svg.appendChild(g);
+        
+        // Interaction
+        g.addEventListener('click', () => jumpToStep(i));
+    });
+}
+
+function updateVisualization() {
+    // Update nodes
+    currentNodes.forEach((n, i) => {
+        const el = document.getElementById(`node-${i}`);
+        if (!el) return;
+        
+        el.classList.remove('node-active', 'node-visited', 'node-pending');
+        const shape = el.querySelector('.node-shape');
+        
+        if (i === currentStep) {
+            el.classList.add('node-active');
+            shape.setAttribute('stroke', 'var(--accent-1)');
+            shape.setAttribute('fill', 'rgba(0, 240, 255, 0.2)');
+            playTone(400 + (n.depth * 100), 'sine', 0.1);
+            
+            // Scroll into view if needed
+            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        } else if (i < currentStep) {
+            el.classList.add('node-visited');
+            shape.setAttribute('stroke', 'var(--success)');
+            shape.setAttribute('fill', 'rgba(0, 255, 157, 0.1)');
+        } else {
+            el.classList.add('node-pending');
+            shape.setAttribute('stroke', 'rgba(255,255,255,0.2)');
+            shape.setAttribute('fill', 'rgba(255,255,255,0.05)');
+        }
+    });
+    
+    // Update links
+    document.querySelectorAll('.link').forEach(l => l.classList.remove('link-active'));
+    if (currentStep >= 0 && currentStep < currentNodes.length) {
+        const current = currentNodes[currentStep];
+        if (current.parentId !== null) {
+            const link = document.getElementById(`link-${current.id}`);
+            if (link) link.classList.add('link-active');
+        }
+    }
+    
+    // Update trace panel
+    updateTrace();
+    
+    // Update timeline
+    const progress = currentStep === -1 ? 0 : ((currentStep + 1) / currentNodes.length) * 100;
+    document.getElementById('timelineProgress').style.width = `${progress}%`;
+    document.getElementById('timelineThumb').style.left = `${progress}%`;
+    document.getElementById('currentStep').textContent = currentStep === -1 ? 0 : currentStep + 1;
+    
+    // Update code highlight
+    document.querySelectorAll('.code-line').forEach((line, i) => {
+        line.classList.remove('active');
+        // Simple heuristic: highlight based on step type
+        if (currentStep >= 0) {
+            const type = currentNodes[currentStep].type;
+            if (type === 'divide' && i === 2) line.classList.add('active');
+            if (type === 'merge' && i === 5) line.classList.add('active');
+        }
+    });
+    
+    // Update array viz if applicable
+    updateArrayViz();
+}
+
+function updateArrayViz() {
+    if (currentStep < 0 || !currentNodes[currentStep].data.arr) return;
+    
+    const node = currentNodes[currentStep];
+    // Reset all bars
+    document.querySelectorAll('.array-bar').forEach(bar => {
+        bar.classList.remove('active', 'pivot');
+    });
+    
+    // Highlight current range
+    if (node.data.range) {
+        const [l, r] = node.data.range;
+        for (let i = l; i <= r; i++) {
+            const bar = document.getElementById(`bar-${i}`);
+            if (bar) bar.classList.add('active');
+        }
+    }
+    
+    if (node.data.pivot !== undefined) {
+        const bar = document.getElementById(`bar-${node.data.high || 0}`);
+        if (bar) bar.classList.add('pivot');
+    }
+}
+
+function updateTrace() {
+    const container = document.getElementById('traceContainer');
+    
+    if (currentStep === -1) {
+        container.innerHTML = `
+            <div class="trace-card active">
+                <div class="trace-header">
+                    <span class="trace-type">Ready</span>
+                    <span class="trace-step">Step 0</span>
+                </div>
+                <div class="trace-content">Initialize algorithm visualization</div>
+            </div>`;
+        return;
+    }
+    
+    const n = currentNodes[currentStep];
+    const prev = currentStep > 0 ? currentNodes[currentStep - 1] : null;
+    
+    let html = `<div class="trace-card active animate-in">
+        <div class="trace-header">
+            <span class="trace-type">${n.type.toUpperCase()}</span>
+            <span class="trace-step">Step ${currentStep + 1}</span>
+        </div>
+        <div class="trace-content">${n.explanation}</div>
+        <div class="trace-meta">
+            <div class="meta-box">
+                <div class="meta-label">Recursion Depth</div>
+                <div class="meta-value">${n.depth}</div>
+            </div>
+            <div class="meta-box">
+                <div class="meta-label">Node ID</div>
+                <div class="meta-value">#${n.id}</div>
+            </div>
+        </div>
+    </div>`;
+    
+    if (prev) {
+        html += `<div class="trace-card" style="opacity: 0.6; transform: scale(0.95);">
+            <div class="trace-header">
+                <span class="trace-type" style="font-size: 0.7rem;">Previous</span>
+            </div>
+            <div class="trace-content" style="font-size: 0.85rem;">${prev.explanation.substring(0, 60)}...</div>
+        </div>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+// Controls
+function stepNext() {
+    if (currentStep < currentNodes.length - 1) {
+        currentStep++;
+        updateVisualization();
+    } else {
+        pause();
+    }
+}
+
+function stepPrev() {
+    if (currentStep > 0) {
+        currentStep--;
+        updateVisualization();
+    }
+}
+
+function stepFirst() {
+    currentStep = 0;
+    updateVisualization();
+}
+
+function stepLast() {
+    currentStep = currentNodes.length - 1;
+    updateVisualization();
+}
+
+function jumpToStep(step) {
+    currentStep = step;
+    updateVisualization();
+    if (isPlaying) pause();
+}
+
+function togglePlay() {
+    if (isPlaying) pause();
+    else play();
+}
+
+function play() {
+    isPlaying = true;
+    document.getElementById('playBtn').innerHTML = '⏸';
+    playInterval = setInterval(() => {
+        stepNext();
+    }, 1000);
+}
+
+function pause() {
+    isPlaying = false;
+    document.getElementById('playBtn').innerHTML = '▶';
+    clearInterval(playInterval);
+}
+
+function seekTimeline(e) {
+    if (!currentNodes.length) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    const step = Math.floor(percent * currentNodes.length);
+    jumpToStep(Math.min(step, currentNodes.length - 1));
+}
+
+function resetAll() {
+    pause();
+    currentStep = -1;
+    currentNodes = [];
+    document.getElementById('mainSvg').innerHTML = '';
+    document.getElementById('traceContainer').innerHTML = `
+        <div class="trace-card active">
+            <div class="trace-content">Ready to execute</div>
+        </div>`;
+    document.getElementById('arrayViz').style.display = 'none';
+    document.getElementById('timelineProgress').style.width = '0%';
+    document.getElementById('timelineThumb').style.left = '0%';
+    document.getElementById('currentStep').textContent = '0';
+    document.getElementById('totalSteps').textContent = '0';
+    resetStats();
+}
+
+// Utilities
+function zoomIn() {
+    const svg = document.getElementById('mainSvg');
+    const current = parseInt(svg.getAttribute('width')) || 1000;
+    svg.setAttribute('width', current * 1.2);
+    svg.setAttribute('height', (parseInt(svg.getAttribute('height')) || 600) * 1.2);
+}
+
+function zoomOut() {
+    const svg = document.getElementById('mainSvg');
+    const current = parseInt(svg.getAttribute('width')) || 1000;
+    svg.setAttribute('width', current * 0.8);
+    svg.setAttribute('height', (parseInt(svg.getAttribute('height')) || 600) * 0.8);
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function exportImage() {
+    const svg = document.getElementById('mainSvg');
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.fillStyle = '#030712';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        
+        const a = document.createElement('a');
+        a.download = 'algorithm-tree.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+    };
+    
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+    } else if (e.code === 'ArrowRight') {
+        stepNext();
+    } else if (e.code === 'ArrowLeft') {
+        stepPrev();
+    } else if (e.code === 'Home') {
+        stepFirst();
+    } else if (e.code === 'End') {
+        stepLast();
+    }
+});
+
+// Initialize
+updateUI();
+</script>
+</body>
+</html>
